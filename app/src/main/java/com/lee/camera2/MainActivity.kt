@@ -35,6 +35,13 @@ import java.util.*
 
 class MainActivity : AppCompatActivity() {
 
+    /**
+     * 2019.01.08
+     * Camera2 API
+     * 유튜브의 Camera2 java tutorial 영상을 kotilin 으로 만들어봄.
+     * 유튜브 주소: https://youtu.be/oPu42I0HSi4?list=PLRvBtl4zJg-QVEn_lM0M7gNm1Xvcmsz7N
+     * 참고했던 kotilin 소스 : https://github.com/v4n0v/Edok
+     */
     val TAG = "Lee"
 
     companion object {
@@ -197,7 +204,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             val reader = ImageReader.newInstance(width, height, ImageFormat.JPEG, 1)
-            val outputSurface = mutableListOf<Surface>()
+            val outputSurface = ArrayList<Surface>(2)
             outputSurface.add(reader.surface)
             outputSurface.add(Surface(textureView.surfaceTexture))
 
@@ -210,36 +217,34 @@ class MainActivity : AppCompatActivity() {
             var rotation: Int = windowManager.defaultDisplay.rotation
             captureBuilder?.set(CaptureRequest.JPEG_ORIENTATION, ORIENTATIONS.get(rotation))
 
-            file = File("${Environment.getExternalStorageDirectory()}/" + UUID.randomUUID().toString())
+            file = File("${Environment.getExternalStorageDirectory()}/${UUID.randomUUID().toString()}.jpg")
 
-            var readerListener: ImageReader.OnImageAvailableListener? = ImageReader.OnImageAvailableListener {
-                var image: Image? = null
-                try {
-                    image = reader.acquireLatestImage()
-                    var buffer = image!!.planes[0].buffer
-                    var bytes = ByteArray(buffer.capacity())
-                    buffer.get(bytes)
+            var readerListener = object : ImageReader.OnImageAvailableListener {
+                override fun onImageAvailable(imageReader: ImageReader) {
+                    Log.e(TAG, "onImageAvailable()")
+                    var image: Image? = null
+                    try {
+                        image = reader.acquireLatestImage()
+                        var buffer = image!!.planes[0].buffer
+                        var bytes = ByteArray(buffer.capacity())
+                        buffer.get(bytes)
 
-                    save(bytes)
+                        save(bytes)
 
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                } finally {
-                    image?.close()
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    } finally {
+                        image?.close()
+                    }
                 }
             }
 
             reader.setOnImageAvailableListener(readerListener, mBackgroundHandler)
             val captureListener = object : CameraCaptureSession.CaptureCallback() {
-                override fun onCaptureCompleted(
-                    session: CameraCaptureSession,
-                    request: CaptureRequest,
-                    result: TotalCaptureResult
-                ) {
+                override fun onCaptureCompleted(session: CameraCaptureSession, request: CaptureRequest, result: TotalCaptureResult) {
                     super.onCaptureCompleted(session, request, result)
                     Toast.makeText(this@MainActivity, "Saved " + file, Toast.LENGTH_SHORT).show()
                     createCameraPreview()
-
                 }
             }
 
@@ -249,7 +254,7 @@ class MainActivity : AppCompatActivity() {
 
                 override fun onConfigured(session: CameraCaptureSession) {
                     try {
-                        cameraCaptureSessions?.capture(captureBuilder?.build(), captureListener, mBackgroundHandler)
+                        session.capture(captureBuilder?.build(), captureListener, mBackgroundHandler)
                     } catch (e: Exception) {
                         e.printStackTrace()
                     }
