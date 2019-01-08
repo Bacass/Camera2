@@ -3,6 +3,7 @@ package com.lee.camera2
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
+import android.databinding.DataBindingUtil
 import android.graphics.ImageFormat
 import android.graphics.Point
 import android.graphics.SurfaceTexture
@@ -24,6 +25,7 @@ import android.view.Display
 import android.view.Surface
 import android.view.TextureView
 import android.widget.Toast
+import com.lee.camera2.databinding.ActivityMainBinding
 import kotlinx.android.synthetic.main.activity_main.*
 import java.io.File
 import java.io.FileOutputStream
@@ -60,13 +62,16 @@ class MainActivity : AppCompatActivity() {
     private var mBackgroundHandler: Handler? = null
     private var mBackgroundThread: HandlerThread? = null
 
+    var mBinding: ActivityMainBinding? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
 
-        textureView?.surfaceTextureListener = textureListener
+        mBinding = DataBindingUtil.setContentView(this, R.layout.activity_main)
 
-        btnCapture?.setOnClickListener {
+        mBinding?.textureView?.surfaceTextureListener = textureListener
+
+        mBinding?.btnCapture?.setOnClickListener {
             takePicture()
         }
 
@@ -307,6 +312,7 @@ class MainActivity : AppCompatActivity() {
         override fun onOpened(camera: CameraDevice) {
             Log.e(TAG, "onOpened() In")
             cameraDevice = camera
+            createCameraPreview()
         }
 
         override fun onDisconnected(camera: CameraDevice) {
